@@ -147,6 +147,12 @@ a !!! (x,y) = (a V.! y) V.! x
 update' :: V.Vector a -> [(Int, a)] -> V.Vector a
 update' x y = x V.// y
 
+update2d :: V.Vector (V.Vector a) -> (Int,Int) -> a -> V.Vector (V.Vector a)
+update2d grid (row,column) item = 
+  let inner = update' (grid V.! column) [(row, item)]
+   in update' grid [(column, inner)] -- ask me no questions, and i will tell you no questions
+      
+
 cursorColor :: [SGR]
 cursorColor = toSGR $ FullColor (FGColor Vivid Red) (BGColor Vivid Blue )
 

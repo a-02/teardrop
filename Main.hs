@@ -38,7 +38,7 @@ main = do
   pure () <* runStateT meat init_Global -- applicative (:
 
 meat :: StateT Global IO (Cofree Identity Image)
-meat = unfoldM potatoes (testImage 30 30)
+meat = unfoldM potatoes (blankImage 50 30)
 
 potatoes :: Image -> StateT Global IO (Image, Identity Image)
 potatoes image = do
@@ -48,12 +48,14 @@ potatoes image = do
   io $ hFlush stdout -- see line 35
   input <- io $ getChar
   modify $ cheese input image
+--  io $ saveNload input image
   get >>= kale input image -- this saves having to repeat line 45 
+
 
 kale :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
 kale input image global =
   if input == ' '
-  then undefined
+  then return (image, Identity $ update2d image global.relCursor (pack global))
   else return (image, Identity $ image)
 
 cheese :: Char -> Image -> Global -> Global
