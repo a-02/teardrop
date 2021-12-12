@@ -5,7 +5,7 @@ cabal-version:      3.0
 --   http://haskell.org/cabal/users-guide/
 -- 
 -- The name of the package.
-name:               td
+name:               teardrop
 
 -- The package version.
 -- See the Haskell package versioning policy (PVP) for standards
@@ -17,7 +17,7 @@ name:               td
 version:            0.0
 
 -- A short (one-line) description of the package.
-synopsis:
+synopsis: minimal picture drawer for your terminal, best used with Spleen
 
 -- A longer description of the package.
 -- description:
@@ -46,8 +46,6 @@ category:           Text
 
 -- Extra files to be distributed with the package, such as examples or a README.
 extra-source-files: CHANGELOG.md
-
-with-compiler: ghc-9.2.1
 
 executable td
     -- .hs or .lhs file containing the Main module.
