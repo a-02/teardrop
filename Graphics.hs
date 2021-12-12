@@ -39,7 +39,7 @@ pageMatch = \case
   Block     -> block
   Braille   -> braille
 
-intMap xs = MS.fromList $ zip [0..] xs
+intMap xs = MS.fromList $ zip [1..] xs --for my next project i SWEAR ill keep things indexed to 0 
 
 allUnicodeMaps :: [Statelike Int Char]
 allUnicodeMaps = lift' . intMap <$> [latin1, latinSupp, latinExtA, box, block, braille]
@@ -85,17 +85,17 @@ renderImage image = do
   sequence_ $ renderRow <$> image
   setSGR [Reset]
 
-(<->) :: Image -> Image -> Image -- append two images horizontally
-a <-> b = V.zipWith (<>) a b
+(<->) :: Image -> Image -> Image -- append two images horizontally, provided b is shorter than a
+a <-> b = (V.zipWith (<>) a b) V.++ (V.drop (V.length b) a)
 
 imagePlusUI :: Global -> Image -> Image
-imagePlusUI global image = (uiFromGlobal global) <-> (renderCursor (relCursor global) image)
+imagePlusUI global image = (renderCursor (relCursor global) image) <-> (uiFromGlobal global)
 
 fullRender = imagePlusUI
 
 uiFromGlobal :: Global -> Image
 uiFromGlobal global = V.fromList $
-  [ colorUITop -- mysterious white box?
+  [ colorUITop 
   , colorUIBottom (stripI $ global.fgSelect)
   , colorUITop
   , colorUIBottom (stripI $ global.bgSelect)
@@ -112,10 +112,9 @@ pageUI :: Statelike Page (Statelike Int Char) -> [V.Vector Cell]
 pageUI tx = 
   let inner     = (stripD tx) MS.! (stripI tx)
       formatted = (defaultColor, ) <$> (M.elems $ stripD inner) :: [Cell]
-      flipColor = toSGR $ FullColor (FGColor Dull Black) (BGColor Vivid White)
       colorized = 
         let (front, back) = splitAt (stripI inner) formatted
-            selected x   = (\x (a,b) -> (,) x b) flipColor x :[] 
+            selected x   = (\x (a,b) -> (,) x b) cursorColor x :[] 
          in if front == []
             then selected (head back) ++ (tail back)
             else init front ++ selected (last front) ++ back
@@ -149,13 +148,13 @@ update' :: V.Vector a -> [(Int, a)] -> V.Vector a
 update' x y = x V.// y
 
 cursorColor :: [SGR]
-cursorColor = toSGR $ FullColor (FGColor Dull Black) (BGColor Vivid White)
+cursorColor = toSGR $ FullColor (FGColor Vivid Red) (BGColor Vivid Blue )
 
 renderRow :: V.Vector Cell -> IO ()
 renderRow row = (sequence_ $ renderCell <$> row) >> (cursorDownLine 1)
 
 renderCell :: Cell -> IO ()
-renderCell cell = (setSGR $ fst cell) >> (putChar $ snd cell)
+renderCell cell = (setSGR $ fst cell) >> (putChar $ snd cell) >> (setSGR [Reset])
 
 oneSpace = 1
 
