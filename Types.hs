@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-} -- pool party!
+{-# LANGUAGE OverloadedRecordDot #-}
 
 module Types where
 
@@ -29,6 +30,14 @@ data Global = Global
 
   -- dont store renderables! its easier to just pretty print a structure than to work with something already printed
     -- also, is this a comonad?
+
+collapse :: Ord s => Statelike s a -> a
+collapse sl = stripD sl M.! stripI sl
+
+pack :: Global -> Cell
+pack global = 
+  (,) (toSGR $ FullColor (collapse global.fgSelect) (collapse global.bgSelect)) 
+      (collapse . collapse $ global.txSelect) -- coolest line of code ive ever written
 
 stripIndexFromStatelike :: Statelike s a -> s
 stripIndexFromStatelike (Statelike s a) = s -- remembering const functor fondly

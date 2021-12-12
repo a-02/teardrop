@@ -32,7 +32,7 @@ main :: IO ()
 main = do
   hSetEcho stdin False
   hSetBuffering stdin NoBuffering
-  hSetBuffering stdout LineBuffering
+  hSetBuffering stdout LineBuffering -- see line 48
   clearScreen
   setCursorPosition 0 0
   pure () <* runStateT meat init_Global -- applicative (:
@@ -40,25 +40,24 @@ main = do
 meat :: StateT Global IO (Cofree Identity Image)
 meat = unfoldM potatoes (testImage 30 30)
 
--- potato flow
--- render the screen
--- grab input
--- do thing with input
--- back to start
-
 potatoes :: Image -> StateT Global IO (Image, Identity Image)
 potatoes image = do
   global <- get
   io $ do clearScreen; setCursorPosition 0 0
   io . renderImage $ fullRender global image
-  io $ hFlush stdout
+  io $ hFlush stdout -- see line 35
   input <- io $ getChar
-  modify $ inputHandler input image
-  return (image, Identity $ image)
+  modify $ cheese input image
+  get >>= kale input image -- this saves having to repeat line 45 
 
+kale :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
+kale input image global =
+  if input == ' '
+  then undefined
+  else return (image, Identity $ image)
 
-inputHandler :: Char -> Image -> Global -> Global
-inputHandler input image global =
+cheese :: Char -> Image -> Global -> Global
+cheese input image global =
   case input of
     'i' -> global{fgSelect = prev global.fgSelect} 
     'o' -> global{fgSelect = next global.fgSelect} 
@@ -86,12 +85,3 @@ inputHandler input image global =
   where down = (\x -> x - 1)
         up = (\x -> x + 1)
         clamp x = x `mod` (V.length image)
-{--
-uh, UX stuff
-WASD: move around the canvas
-space: draw
-HJ: fgcolor select
-KL: bgcolor select
-YU: page select
-IO: index select
---}
