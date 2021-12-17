@@ -15,7 +15,6 @@ import Control.Comonad
 import Control.Monad.IO.Class
 
 import Data.Bifunctor
-import Data.Bifunctor.Flip
 import Data.Map as M
 import Data.Vector as V hiding (modify)
 
@@ -32,20 +31,20 @@ main :: IO ()
 main = do
   hSetEcho stdin False
   hSetBuffering stdin NoBuffering
-  hSetBuffering stdout LineBuffering -- see line 48
+  hSetBuffering stdout LineBuffering -- see line 47
   clearScreen
   setCursorPosition 0 0
-  pure () <* runStateT meat init_Global -- applicative (:
+  pure () <* runStateT meat init_Global -- applicative .v.
 
 meat :: StateT Global IO (Cofree Identity Image)
-meat = unfoldM potatoes (blankImage 50 30)
+meat = unfoldM potatoes (blankImage 30 30)
 
 potatoes :: Image -> StateT Global IO (Image, Identity Image)
 potatoes image = do
   global <- get
   io $ do clearScreen; setCursorPosition 0 0
   io . renderImage $ fullRender global image
-  io $ hFlush stdout -- see line 35
+  io $ hFlush stdout -- see line 34
   input <- io $ getChar
   modify $ cheese input image
 --  io $ saveNload input image
@@ -74,16 +73,18 @@ cheese input image global =
     'h' -> global{txSelect = 
              Statelike
                (stripI global.txSelect) 
-               (M.adjust prev (stripI global.txSelect) (stripD global.txSelect))} -- there has got to be a better way
-    'd' -> global{relCursor = bimap (clamp . up) id global.relCursor}
-    'a' -> global{relCursor = bimap (clamp . down) id global.relCursor}
-    'w' -> global{relCursor = bimap id (clamp . down) global.relCursor}
-    's' -> global{relCursor = bimap id (clamp . up) global.relCursor}
-    'c' -> global{relCursor = bimap (clamp . up) (clamp . up) global.relCursor}
-    'z' -> global{relCursor = bimap (clamp . down) (clamp . up) global.relCursor}
-    'q' -> global{relCursor = bimap (clamp . down) (clamp . down) global.relCursor}
-    'e' -> global{relCursor = bimap (clamp . up) (clamp . down) global.relCursor}
+               (M.adjust prev (stripI global.txSelect) (stripD global.txSelect))} 
+    'd' -> global{relCursor = bimap (clampX . up  ) id global.relCursor}
+    'a' -> global{relCursor = bimap (clampX . down) id global.relCursor}
+    'w' -> global{relCursor = bimap id (clampY . down) global.relCursor}
+    's' -> global{relCursor = bimap id (clampY . up  ) global.relCursor}
+    'c' -> global{relCursor = bimap (clampX . up  ) (clampY . up  ) global.relCursor}
+    'z' -> global{relCursor = bimap (clampX . down) (clampY . up  ) global.relCursor}
+    'q' -> global{relCursor = bimap (clampX . down) (clampY . down) global.relCursor}
+    'e' -> global{relCursor = bimap (clampX . up  ) (clampY . down) global.relCursor}
     _   -> global
   where down = (\x -> x - 1)
         up = (\x -> x + 1)
-        clamp x = x `mod` (V.length image)
+        clampX x = x `mod` (V.length image)
+        clampY y = y `mod` (V.length $ V.head image)
+-- whitespace matters only when it doesnt

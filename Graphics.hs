@@ -1,12 +1,8 @@
 {-# Language BinaryLiterals #-}
-{-# Language MultiParamTypeClasses #-}
-{-# Language FunctionalDependencies #-}
-{-# Language OverloadedLists #-}
 {-# Language OverloadedRecordDot #-}
 {-# Language LambdaCase #-}
 {-# Language TupleSections #-}
-{-# Language BlockArguments #-}
-{-# Language ScopedTypeVariables #-}
+
 module Graphics where
 
 import Types 
@@ -152,7 +148,6 @@ update2d grid (row,column) item =
   let inner = update' (grid V.! column) [(row, item)]
    in update' grid [(column, inner)] -- ask me no questions, and i will tell you no questions
       
-
 cursorColor :: [SGR]
 cursorColor = toSGR $ FullColor (FGColor Vivid Red) (BGColor Vivid Blue )
 
@@ -161,6 +156,3 @@ renderRow row = (sequence_ $ renderCell <$> row) >> (cursorDownLine 1)
 
 renderCell :: Cell -> IO ()
 renderCell cell = (setSGR $ fst cell) >> (putChar $ snd cell) >> (setSGR [Reset])
-
-oneSpace = 1
-

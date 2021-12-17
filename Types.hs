@@ -10,16 +10,12 @@ import System.Console.ANSI
 import Control.Monad.Trans.State.Lazy
 
 import Data.Bifunctor as B
-import Data.Bifunctor.Flip
-import Data.Bifunctor.TH -- cool pool party!
 
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import Numeric.Natural
 
 data Statelike s a = Statelike s (M.Map s a) deriving (Eq, Show) 
-$(deriveBifunctor ''M.Map) -- the type above is evil
-$(deriveBifunctor ''Statelike) -- i hate it
 
 data Global = Global
   { txSelect :: Statelike Page (Statelike Int Char)
