@@ -1,2 +1,2 @@
 # teardrop
-drawing program for your terminal built out of solid haskell
+there was a cool readme here but its gone now
