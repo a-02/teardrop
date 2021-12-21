@@ -1,19 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE TemplateHaskell #-} -- pool party!
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Types where
 
-import System.Console.ANSI
-
-import Control.Monad.Trans.State.Lazy
-
-import Data.Bifunctor as B
-
+import           System.Console.ANSI
+import           Data.Serialize as S
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
-import Numeric.Natural
 
 data Statelike s a = Statelike s (M.Map s a) deriving (Eq, Show) 
 
@@ -46,9 +39,9 @@ stripD = stripDataFromStatelike
 
 data Page = Latin1 | LatinSupp | LatinExtA | Box | Block | Braille deriving (Eq, Bounded, Enum, Show, Ord)
 
-type Image = V.Vector (V.Vector Cell)  -- this worked last time!
+type Image = V.Vector (V.Vector Cell)  
 
-type Cell = ([SGR], Char) 
+type Cell = ([SGR], Char)  
 
 lift' :: M.Map s a -> Statelike s a
 lift' m = Statelike (fst $ M.findMin m) m
@@ -103,3 +96,6 @@ instance Colorlike SGR where
 instance Colorlike [SGR] where
         toSGR = id
 
+instance Serialize SGR where
+  get = read <$> S.get
+  put = S.put . show

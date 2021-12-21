@@ -23,6 +23,7 @@ import System.Console.ANSI
 
 import Types
 import Graphics
+import Files
 
 io :: IO a -> StateT Global IO a
 io = liftIO
@@ -39,6 +40,8 @@ main = do
 meat :: StateT Global IO (Cofree Identity Image)
 meat = unfoldM potatoes (blankImage 30 30)
 
+-- TODO: way of easily extending functionality with minimal reshuffling
+
 potatoes :: Image -> StateT Global IO (Image, Identity Image)
 potatoes image = do
   global <- get
@@ -47,8 +50,8 @@ potatoes image = do
   io $ hFlush stdout -- see line 34
   input <- io $ getChar
   modify $ cheese input image
---  io $ saveNload input image
-  get >>= kale input image -- this saves having to repeat line 45 
+  io $ diskOp input image
+  get >>= kale input image -- this saves having to repeat line 44 
 
 
 kale :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
@@ -87,4 +90,4 @@ cheese input image global =
         up = (\x -> x + 1)
         clampX x = x `mod` (V.length image)
         clampY y = y `mod` (V.length $ V.head image)
--- whitespace matters only when it doesnt
+-- this is so ugly

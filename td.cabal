@@ -38,7 +38,7 @@ license-file:       LICENSE
 author:             nikshalark
 
 -- An email address to which users can send suggestions, bug reports, and patches.
-maintainer:         none
+maintainer:         nikshalark
 
 -- A copyright notice.
 -- copyright:
@@ -53,7 +53,7 @@ executable td
     ghc-options:
       -O2
     -- Modules included in this executable, other than Main.
-    other-modules: Types, Graphics 
+    other-modules: Types, Graphics, Files 
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -67,8 +67,10 @@ executable td
                       vector >=0.12.0.0,
                       containers >=0.6.1.0,
                       haskeline >=0.8.0,
-		      bifunctors >=5.5.0
-
+		      bifunctors >=5.5.0,
+		      bytestring >=0.11.2.0,
+                      cereal >=0.5.0.0,
+		      cereal-vector >=0.2.0.0
 
     -- Directories containing source files.
     -- hs-source-dirs:
