@@ -26,14 +26,14 @@ saveImage img = do
 
 loadImage :: IO Image
 loadImage = do
-  hSetEcho stdin False
+  hSetEcho stdin True
   print "filepath to load from:"
   filepath <- getLine
   putStrLn $ "loading" P.++ filepath P.++ " ..."
   file <- B.readFile filepath 
   let image = decode file :: Either String Image
    in do putStrLn "done, probably."
-         hSetEcho stdin True
+         hSetEcho stdin False
          return $ either (const $ blankImage 30 30) id image
   
 diskOp :: Char -> Image -> IO Image
