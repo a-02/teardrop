@@ -50,8 +50,8 @@ potatoes image = do
   io $ hFlush stdout -- see line 34
   input <- io $ getChar
   modify $ cheese input image
-  io $ diskOp input image
-  get >>= kale input image -- this saves having to repeat line 44 
+  loadedImage <- io $ diskOp input image
+  get >>= kale input loadedImage -- this saves having to repeat line 44 
 
 
 kale :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
