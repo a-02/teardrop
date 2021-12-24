@@ -35,33 +35,32 @@ main = do
   hSetBuffering stdout LineBuffering -- see line 47
   clearScreen
   setCursorPosition 0 0
-  pure () <* runStateT meat init_Global -- applicative .v.
+  pure () <* runStateT everything init_Global -- applicative .v.
 
-meat :: StateT Global IO (Cofree Identity Image)
-meat = unfoldM potatoes (blankImage 30 30)
+everything :: StateT Global IO (Cofree Identity Image)
+everything = unfoldM mainLoop (blankImage 30 30)
 
 -- TODO: way of easily extending functionality with minimal reshuffling
 
-potatoes :: Image -> StateT Global IO (Image, Identity Image)
-potatoes image = do
+mainLoop :: Image -> StateT Global IO (Image, Identity Image)
+mainLoop image = do
   global <- get
   io $ do clearScreen; setCursorPosition 0 0
   io . renderImage $ fullRender global image
   io $ hFlush stdout -- see line 34
   input <- io $ getChar
-  modify $ cheese input image
+  modify $ inputHandler input image
   loadedImage <- io $ diskOp input image
-  get >>= kale input loadedImage -- this saves having to repeat line 44 
+  get >>= nextStep input loadedImage -- this saves having to repeat line 44 
 
-
-kale :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
-kale input image global =
+nextStep :: Char -> Image -> Global -> StateT Global IO (Image, Identity Image)
+nextStep input image global =
   if input == ' '
   then return (image, Identity $ update2d image global.relCursor (pack global))
   else return (image, Identity $ image)
 
-cheese :: Char -> Image -> Global -> Global
-cheese input image global =
+inputHandler :: Char -> Image -> Global -> Global
+inputHandler input image global =
   case input of
     'i' -> global{fgSelect = prev global.fgSelect} 
     'o' -> global{fgSelect = next global.fgSelect} 
