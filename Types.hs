@@ -15,10 +15,8 @@ data Global = Global
   , fgSelect :: Statelike Int FGColor
   , bgSelect :: Statelike Int BGColor
   , relCursor :: RelCursor
+  , mode :: (Mode1, Mode2)
   } deriving (Eq, Show)
-
-  -- dont store renderables! its easier to just pretty print a structure than to work with something already printed
-    -- also, is this a comonad?
 
 collapse :: Ord s => Statelike s a -> a
 collapse sl = stripD sl M.! stripI sl
@@ -39,14 +37,17 @@ stripD = stripDataFromStatelike
 
 data Page = Latin1 | LatinSupp | LatinExtA | Box | Block | Braille deriving (Eq, Bounded, Enum, Show, Ord)
 
+data Mode1 = Normal | Extended | Paint | Erase | Replace deriving (Eq, Show)
+data Mode2 = Stamp | Text | Line | Polygon | PolyFill deriving (Eq, Show)
+
 type Image = V.Vector (V.Vector Cell)  
 
 type Cell = ([SGR], Char)  
 
+type RelCursor = (Int, Int)
+
 lift' :: M.Map s a -> Statelike s a
 lift' m = Statelike (fst $ M.findMin m) m
-
-type RelCursor = (Int, Int)
 
 next :: (Ord s, Enum s, Bounded s, Eq a) => (Statelike s a) -> (Statelike s a)
 next sl@(Statelike s a) = 

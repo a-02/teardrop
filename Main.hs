@@ -11,7 +11,6 @@ import Data.Functor.Identity
 import Control.Comonad.Cofree
 import Control.Monad.Trans.State.Lazy
 import Control.Monad
-import Control.Comonad
 import Control.Monad.IO.Class
 
 import Data.Bifunctor
@@ -41,8 +40,15 @@ everything :: StateT Global IO (Cofree Identity Image)
 everything = unfoldM mainLoop (blankImage 30 30)
 
 -- TODO: way of easily extending functionality with minimal reshuffling
+-- possible fix:
+--   type Between = (Image, (Int, Image -> StateT Global IO (Between, Identity Between))
+--   mainLoop :: Between -> StateT Global IO (Between, Identity Between) 
+--   maybe use map?
+--
+--   the least complicated solution is just to make Global bigger
 
-mainLoop :: Image -> StateT Global IO (Image, Identity Image)
+
+mainLoop :: Image -> StateT Global IO (Image, Identity Image) 
 mainLoop image = do
   global <- get
   io $ do clearScreen; setCursorPosition 0 0

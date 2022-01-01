@@ -30,7 +30,7 @@ loadImage = do
   putStr "filepath to load from:"
   filepath <- getLine
   putStrLn $ "loading " P.++ filepath P.++ " ..."
-  file <- B.readFile filepath 
+  file <- B.readFile (filepath P.++ ".td")
   let image = decode file :: Either String Image
    in do putStrLn "done, probably."
          hSetEcho stdin False; hSetBuffering stdout LineBuffering

@@ -54,7 +54,8 @@ init_Global =
   Global init_txSelect 
          init_fgSelect 
          init_bgSelect
-         (0, 0) 
+         (0, 0)
+         (Normal, Stamp)
 
 allFGColor :: [FGColor]
 allFGColor = ((FGColor Dull) <$> [minBound..maxBound]) ++ ((FGColor Vivid) <$> [minBound..maxBound])
