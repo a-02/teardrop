@@ -1,4 +1,3 @@
-# teardrop
-drawing program for your terminal built out of solid haskell
+![](https://i.imgur.com/HCtqmyB.png)
 
-![](https://i.imgur.com/54bfdhH.png)
+# wtf haskell art program... bro
