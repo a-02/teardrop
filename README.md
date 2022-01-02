@@ -10,3 +10,14 @@ teardrop is a thing to make "ansi" art in your terminal. its not compatible with
 - space : paint
 - shift-s : save
 - shift-l : load
+
+## compiling from source
+in order to compile this thing, youre gonna need some haskell tools. use GHCup to install ghc-9.2.1 and cabal-3.4.0.0 or anything higher.
+
+then:
+- git clone https://github.com/nikshalark/teardrop.git
+- cd teardrop
+- cabal build
+- cabal run
+
+if this doesnt work, please open an issue immediately
