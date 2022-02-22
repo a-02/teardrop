@@ -9,9 +9,15 @@ import Data.Vector
 import Data.Vector.Serialize
 import Data.Serialize
 import Data.ByteString as B hiding (getLine, putStr)
+import Data.Tini -- >:)
 
 import Types
 import Graphics
+
+
+
+-- dont look over here
+
 
 saveImage :: Image -> IO Image
 saveImage img = do
