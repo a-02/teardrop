@@ -9,11 +9,13 @@ module Input where
 import Control.Comonad
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Loops
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor
 import Data.Bitraversable
 import Data.Either as E
 import Data.Map as M
+import Data.Semigroup
 import Data.Semigroup.Bifoldable
 import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
@@ -124,7 +126,6 @@ keySchemeStamp image keycommand =
       clampY y = y `mod` (V.length $ V.head image)
       down = (\x -> x - 1)
       up = (\x -> x + 1)
-      whatever = return $ Left []
    in case keycommand of
         Up -> do modify \g -> g {relCursor = bimap id (clampY . down) g.relCursor}; whatever
         Down -> do modify \g -> g {relCursor = bimap id (clampY . up) g.relCursor}; whatever
@@ -181,40 +182,10 @@ keySchemePoly = undefined
 
 keySchemeLine :: Scheme
 keySchemeLine image keycommand =
-  let cx = clampX image
-      cy = clampY image
-   in case keycommand of
-        Up -> undefined
-        Down -> undefined
-        KLeft -> undefined
-        KRight -> undefined
-        UpLeft -> undefined
-        UpRight -> undefined
-        DownLeft -> undefined
-        DownRight -> undefined
-        PrevFG -> undefined
-        NextFG -> undefined
-        PrevBG -> undefined
-        NextBG -> undefined
-        PrevPG -> undefined
-        NextPG -> undefined
-        Save -> undefined
-        Load -> undefined
-        Select -> undefined
-        Dummy -> undefined
-
--- this is monad-loops iterateUntilM. i dont wanna import the whole package
-loop :: Monad m => (a -> Bool) -> (a -> m a) -> a -> m a
-loop predicate action initial =
-  if predicate initial
-    then return initial
-    else action initial >>= loop predicate action
-
-data These a b = This a | These a b | That b
-
-funny :: (Monoid a, Monoid b) => Either a b -> (a, b)
-funny (Left a) = (a, mempty)
-funny (Right b) = (mempty, b)
+  let go x = do
+        y <- keySchemeStamp image keycommand
+        return $ validate [x, y]
+   in iterateUntilM (E.either undefined undefined) go (Left [])
 
 -- so heres the thing. the counit is supposed to be Either. but that sucks
 class Bifunctor w => Bicomonad w where

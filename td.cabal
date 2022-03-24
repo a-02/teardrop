@@ -70,7 +70,8 @@ executable td
 		      cereal-vector >=0.2.0.0,
 		      comonad >=5.0.0,
 		      megaparsec >=9.2.0,
-	              semigroupoids >=5.3.7
+	              semigroupoids >=5.3.7,
+	              monad-loops >=0.4.3
 
     -- Directories containing source files.
     -- hs-source-dirs:

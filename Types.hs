@@ -113,6 +113,9 @@ instance Semigroup a => Semigroup (Guts a b) where
   Guts (Right x) <> _ = Guts $ Right x
   _ <> Guts (Right x) = Guts $ Right x
 
+validate :: Semigroup a => [Either a b] -> Either a b
+validate = (guts . foldl1 (<>) . (fmap Guts))
+
 -- !! Unital typeclass. !! --
 
 class Unital a where -- monoid minus associative
