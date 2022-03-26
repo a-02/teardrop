@@ -3,6 +3,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Input where
 
@@ -12,17 +13,16 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Loops
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor
-import Data.Bitraversable
 import Data.Either as E
+import Data.IORef
+import Data.List
 import Data.Map as M
-import Data.Semigroup
-import Data.Semigroup.Bifoldable
 import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
 import Graphics
 import Lonely
 import Types
-import Prelude hiding (Left, Right)
+import Prelude as P hiding (Left, Right)
 
 -- select input scheme from mode2
 --  - read from file?
@@ -92,7 +92,7 @@ selectCells input shebang =
   let image = snd . fst $ shebang
       scheme = snd shebang
    in do
-        char2kc <- lookupU <$> (io $ do grabby) :: StateT Global IO (Char -> KeyCommand)
+        char2kc <- io $ grabby :: StateT Global IO (Char -> KeyCommand)
         scheme >>= (\x -> x image (char2kc input))
 
 -- colorCells isn't gonna do any actual looping, its just gonna take a list of cells,
@@ -178,14 +178,38 @@ keySchemeText :: Scheme
 keySchemeText = undefined
 
 keySchemePoly :: Scheme
-keySchemePoly = undefined
+keySchemePoly image keycommand =
+  let go x = do
+        input <- io $ getChar
+        c2kc <- io $ readIORef =<< char2kcRef' -- huh?
+        y <- keySchemeStamp image (c2kc input)
+        return $ validate [x, y]
+   in keySchemeStamp image keycommand
+        >>= iterateUntilM
+          ( E.either
+              polyTest
+              true
+          )
+          go
+
+polyTest x =
+  let (a : b : rest) = P.reverse x
+   in a == b
 
 keySchemeLine :: Scheme
 keySchemeLine image keycommand =
   let go x = do
-        y <- keySchemeStamp image keycommand
+        input <- io $ getChar
+        c2kc <- io $ readIORef =<< char2kcRef'
+        y <- keySchemeStamp image (c2kc input)
         return $ validate [x, y]
-   in iterateUntilM (E.either undefined undefined) go (Left [])
+   in keySchemeStamp image keycommand
+        >>= iterateUntilM
+          ( E.either
+              (\x -> P.length x == 2)
+              true
+          )
+          go
 
 -- so heres the thing. the counit is supposed to be Either. but that sucks
 class Bifunctor w => Bicomonad w where

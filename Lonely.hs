@@ -12,5 +12,7 @@ down = (\x -> x - 1)
 
 up = (\x -> x + 1)
 
+true = const True
+
 whatever :: StateT Global IO (Either [a] b)
 whatever = return $ Left []

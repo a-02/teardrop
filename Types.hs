@@ -6,6 +6,7 @@ module Types where
 import Control.Comonad
 import Control.Monad.Trans.State.Lazy
 import Data.Char
+import Data.IORef
 import qualified Data.Map.Strict as M
 import Data.Monoid
 import Data.Serialize as S
@@ -91,6 +92,8 @@ type Image = V.Vector (V.Vector Cell)
 type Env = (Mode, Image)
 
 type RelCursor = (Int, Int)
+
+type Conf = IORef (Char -> KeyCommand)
 
 type Scheme =
   Image ->

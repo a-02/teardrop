@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Files where
@@ -6,8 +7,8 @@ import Control.Applicative hiding (many)
 import Data.ByteString as B hiding (getLine, putStr)
 import Data.Either
 import Data.Functor
+import Data.IORef
 import Data.Serialize
-import Data.Tuple (swap) -- oops!!! ooops!!!!! FUCK
 import Data.Vector
 import Data.Vector.Serialize
 import Data.Void
@@ -24,27 +25,28 @@ parseKeyCommand :: Parser KeyCommand
 parseKeyCommand = P.foldl1 (<|>) $ kcTypes <*> (string' <$> kcStrings)
   where
     kcTypes =
-      (<$)
-        <$> [ UpLeft, -- die
-              UpRight,
-              DownLeft,
-              DownRight,
-              Up,
-              Down,
-              KLeft,
-              KRight,
-              PrevFG,
-              NextFG,
-              PrevBG,
-              NextBG,
-              PrevTX,
-              NextTX,
-              PrevPG,
-              NextPG,
-              Save,
-              Load,
-              Select
-            ]
+      fmap
+        (<$)
+        [ UpLeft, -- die
+          UpRight,
+          DownLeft,
+          DownRight,
+          Up,
+          Down,
+          KLeft,
+          KRight,
+          PrevFG,
+          NextFG,
+          PrevBG,
+          NextBG,
+          PrevTX,
+          NextTX,
+          PrevPG,
+          NextPG,
+          Save,
+          Load,
+          Select
+        ]
     kcStrings =
       [ "upleft",
         "upright",
@@ -79,12 +81,22 @@ parseKCLine = do
   return (ch, kc)
 
 -- maybe make this so a user can call a keyconfig from command line
-grabby :: IO [(Char, KeyCommand)]
-grabby = do
-  conf <- P.readFile "keys.conf"
-  return $ case runParser (many parseKCLine <* eof) "keys.conf" conf of
-    Left _ -> undefined
-    Right x -> x
+grabby :: IO (Char -> KeyCommand)
+grabby =
+  lookupU <$> do
+    conf <- P.readFile "keys.conf"
+    return $ case runParser (many parseKCLine <* eof) "keys.conf" conf of
+      Left _ -> undefined -- Fuck You
+      Right x -> x
+
+char2kcRef :: IO Conf
+char2kcRef = do
+  grab <- grabby
+  conf <- newIORef grab
+  return conf
+
+char2kcRef' :: IO Conf
+char2kcRef' = grabby >>= newIORef
 
 lookupU :: (Eq a, Unital b) => [(a, b)] -> a -> b -- fuck Maybe. all my homies hate Maybe
 lookupU [] _ = unit
