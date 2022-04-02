@@ -71,7 +71,8 @@ executable td
 		      comonad >=5.0.0,
 		      megaparsec >=9.2.0,
 	              semigroupoids >=5.3.7,
-	              monad-loops >=0.4.3
+	              monad-loops >=0.4.3,
+	              distributive >=0.6.2.1
 
     -- Directories containing source files.
     -- hs-source-dirs:

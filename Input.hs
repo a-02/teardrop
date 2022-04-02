@@ -13,8 +13,9 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Loops
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor
+import Data.Distributive
 import Data.Either as E
-import Data.IORef
+import Data.IORef -- see comment at bottom of file
 import Data.List
 import Data.Map as M
 import Data.Vector as V hiding (foldl1, modify, sequence)
@@ -43,7 +44,7 @@ meat input image = do
       bleh = return ()
   extract $
     extend
-      (grabScheme =>= selectCells input =>= colorCells)
+      (grabScheme input =>= selectCells input =>= colorCells input)
       (env, bleh)
 
 -- extract :: (e, a) -> a
@@ -61,14 +62,15 @@ type Scheme =
 -}
 
 grabScheme ::
+  Char ->
   (Env, StateT Global IO ()) ->
   StateT Global IO Scheme
-grabScheme shebang =
+grabScheme input shebang =
   let mode2 = snd . fst . fst $ shebang
       image = snd . fst $ shebang
    in return $ case mode2 of
         Stamp -> keySchemeStamp
-        Text -> keySchemeText
+        Text -> keySchemeText input
         Line -> keySchemeLine
         Polygon -> keySchemePoly
         PolyFill -> keySchemePoly
@@ -92,12 +94,13 @@ selectCells input shebang =
   let image = snd . fst $ shebang
       scheme = snd shebang
    in do
-        char2kc <- io $ grabby :: StateT Global IO (Char -> KeyCommand)
+        char2kc <- io $ readIORef =<< char2kcRef' :: StateT Global IO (Char -> KeyCommand)
         scheme >>= (\x -> x image (char2kc input))
 
 -- colorCells isn't gonna do any actual looping, its just gonna take a list of cells,
 -- look at the current painting mode, and then return the image with those cells modified
 colorCells ::
+  Char ->
   ( Env,
     StateT
       Global
@@ -105,7 +108,7 @@ colorCells ::
       (Either [RelCursor] (Image, Maybe Image))
   ) ->
   StateT Global IO (Image, Maybe Image)
-colorCells shebang =
+colorCells input shebang =
   let image = snd . fst $ shebang
       mode1 = fst . fst . fst $ shebang
       buncha = snd $ shebang
@@ -174,8 +177,11 @@ keySchemeStamp image keycommand =
             return $ Left [rel]
         Dummy -> whatever
 
-keySchemeText :: Scheme
-keySchemeText = undefined
+keySchemeText :: Char -> Scheme
+keySchemeText input image keycommand = case input of
+  '\b' -> whatever
+  '\n' -> whatever
+  _ -> whatever
 
 keySchemePoly :: Scheme
 keySchemePoly image keycommand =
@@ -232,3 +238,14 @@ instance Bicomonad (,) where
   rextract = snd
   biduplicate w = (w, w)
   biextend f g w = (f w, g w)
+
+{- on IORef;
+
+its actually ok to use ioref. really if you just use one and you dont modify it, it cant hurt you.
+here, it is being used to keep a file in memory and not have to read and parse it every time
+an input is read.
+
+the configuration function is kept in RAM (i believe, not sure where else it could be), makes it
+a lot easier than keeping the whole bytestring and then parsing it every time
+
+-}
