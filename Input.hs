@@ -18,6 +18,7 @@ import Data.List
 import Data.Map as M
 import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
+import Geometry
 import Graphics
 import Lens.Micro
 import Lonely
