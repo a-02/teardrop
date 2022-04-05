@@ -53,7 +53,7 @@ executable td
     ghc-options:
       -O2
     -- Modules included in this executable, other than Main.
-    other-modules: Types, Graphics, Files, Input, Lonely
+    other-modules: Types, Graphics, Files, Input, Lonely, Geometry
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -72,7 +72,9 @@ executable td
 		      megaparsec >=9.2.0,
 	              semigroupoids >=5.3.7,
 	              monad-loops >=0.4.3,
-	              distributive >=0.6.2.1
+	              microlens >=0.4.12.0,
+	              hgeometry >=0.14,
+	              hgeometry-combinatorial >=0.14
 
     -- Directories containing source files.
     -- hs-source-dirs:

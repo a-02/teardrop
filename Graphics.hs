@@ -182,3 +182,21 @@ renderRow row = (sequence_ $ renderCell <$> row) *> (cursorDownLine 1)
 -- as intended. more research required here.
 renderCell :: Cell -> IO ()
 renderCell cell = (setSGR $ fst cell) *> (putChar $ snd cell) *> (setSGR [Reset])
+
+-- i dont know how this works. this was "adapted" from LambdaHack
+
+bresenhams :: RelCursor -> RelCursor -> [RelCursor]
+bresenhams (x0, y0) (x1, y1) =
+  let (dx, dy) = (x1 - x0, y1 - y0)
+      xyStep b (x, y) = (x + signum dx, y + signum dy * b)
+      yxStep b (x, y) = (x + signum dx * b, y + signum dy)
+      (p, q, step)
+        | abs dx > abs dy = (abs dy, abs dx, xyStep)
+        | otherwise = (abs dx, abs dy, yxStep)
+      bw = balancedWord p q
+      walk w xy = xy : walk (tail w) (step (head w) xy)
+   in walk bw (x0, y0)
+
+balancedWord :: Int -> Int -> [Int]
+balancedWord p q | p < q = 0 : balancedWord p q
+balancedWord p q = 1 : balancedWord p q

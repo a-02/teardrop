@@ -1,9 +1,8 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Input where
 
@@ -13,7 +12,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Loops
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor
-import Data.Distributive
 import Data.Either as E
 import Data.IORef -- see comment at bottom of file
 import Data.List
@@ -21,9 +19,10 @@ import Data.Map as M
 import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
 import Graphics
+import Lens.Micro
 import Lonely
 import Types
-import Prelude as P hiding (Left, Right)
+import Prelude as P
 
 -- select input scheme from mode2
 --  - read from file?
@@ -66,8 +65,8 @@ grabScheme ::
   (Env, StateT Global IO ()) ->
   StateT Global IO Scheme
 grabScheme input shebang =
-  let mode2 = snd . fst . fst $ shebang
-      image = snd . fst $ shebang
+  let mode2 = shebang ^. _1 . _1 . _2
+      image = shebang ^. _1 . _2
    in return $ case mode2 of
         Stamp -> keySchemeStamp
         Text -> keySchemeText input
@@ -91,8 +90,8 @@ selectCells ::
       )
   )
 selectCells input shebang =
-  let image = snd . fst $ shebang
-      scheme = snd shebang
+  let image = shebang ^. _1 . _2
+      scheme = shebang ^. _2
    in do
         char2kc <- io $ readIORef =<< char2kcRef' :: StateT Global IO (Char -> KeyCommand)
         scheme >>= (\x -> x image (char2kc input))
@@ -109,10 +108,24 @@ colorCells ::
   ) ->
   StateT Global IO (Image, Maybe Image)
 colorCells input shebang =
-  let image = snd . fst $ shebang
-      mode1 = fst . fst . fst $ shebang
-      buncha = snd $ shebang
-   in buncha >>= undefined
+  let image = shebang ^. _1 . _2
+      mode1 = shebang ^. _1 . _1 . _1
+      schemeResult = shebang ^. _2
+   in schemeResult >>= painty image mode1
+
+painty ::
+  Image ->
+  Mode1 ->
+  Either [RelCursor] (Image, Maybe Image) ->
+  StateT Global IO (Image, Maybe Image)
+painty image mode1 = \case
+  Right x -> return x
+  Left xs ->
+    if P.length xs == 2
+      then
+        let line = (\(x : y : nothing) -> bresenhams x y) xs
+         in undefined
+      else undefined
 
 -- explainer:
 --
@@ -177,6 +190,7 @@ keySchemeStamp image keycommand =
             return $ Left [rel]
         Dummy -> whatever
 
+-- why did i do this to myself
 keySchemeText :: Char -> Scheme
 keySchemeText input image keycommand = case input of
   '\b' -> whatever
