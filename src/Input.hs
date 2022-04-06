@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Input where
 
@@ -121,14 +122,20 @@ painty ::
   StateT Global IO (Image, Maybe Image)
 painty image (mode1, mode2) = \case
   Right x -> return x
-  Left xs ->
-    let line = (\(x : y : nothing) -> bresenhams x y) xs
-     in case mode2 of
-          Stamp -> undefined
-          Text -> undefined
-          Line -> undefined
-          Polygon -> undefined
-          PolyFill -> undefined
+  Left cursors ->
+    let line = (\(x : y : nothing) -> bresenhams x y) cursors
+        poly = pixelsOnBoundary cursors
+        polyfill = pixelsInPolygon cursors
+        update global (x :: RelCursor) = update2d image x ((mode1ToPack mode1) global) :: Image
+        paintMeat g xs = (Just . foldl1 magma) $ update g <$> xs
+     in do
+          g <- get -- i never thought i could do this
+          case mode2 of
+            Stamp -> return (image, paintMeat g cursors) -- im stupid
+            Text -> return (image, paintMeat g cursors)
+            Line -> return (image, paintMeat g line)
+            Polygon -> return (image, paintMeat g poly)
+            PolyFill -> return (image, paintMeat g polyfill)
 
 -- explainer:
 --

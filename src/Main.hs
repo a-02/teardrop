@@ -22,6 +22,7 @@ import Data.Map as M
 import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
 import Graphics
+import Input
 import System.Console.ANSI
 import System.IO
 import Types
@@ -39,10 +40,6 @@ main = do
   clearScreen
   setCursorPosition 0 0
   pure () <* runStateT everything initGlobal
-
--- convenience notation!
-io :: IO a -> StateT Global IO a
-io = liftIO
 
 -- what? alright this cofree thing solves a very problem
 -- unfoldM's typesig is...
@@ -128,10 +125,7 @@ modeModify input = do
 
 -- UNIMPL; see Input.hs
 paintModify :: Char -> Image -> StateT Global IO (Image, Maybe Image)
-paintModify input image = do
-  global <- get
-  let mode = global.mode
-  return (image, Just image)
+paintModify input image = meat input image
 
 -- real code down here
 

@@ -129,10 +129,15 @@ validate :: Semigroup a => [Either a b] -> Either a b
 validate = (guts . foldl1 (<>) . (fmap Guts))
 
 -- !! Unital typeclass. !! --
+a `magma` b = a <~> b
 
 class Unital a where -- monoid minus associative
   unit :: a
   (<~>) :: a -> a -> a
+
+instance Unital a => Unital (V.Vector a) where
+  unit = V.empty
+  a <~> b = V.zipWith (<~>) a b
 
 instance Unital Char where
   unit = '\NUL'
