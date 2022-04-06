@@ -110,23 +110,25 @@ colorCells ::
   StateT Global IO (Image, Maybe Image)
 colorCells input shebang =
   let image = shebang ^. _1 . _2
-      mode1 = shebang ^. _1 . _1 . _1
+      mode = shebang ^. _1 . _1
       schemeResult = shebang ^. _2
-   in schemeResult >>= painty image mode1
+   in schemeResult >>= painty image mode
 
 painty ::
   Image ->
-  Mode1 ->
+  Mode ->
   Either [RelCursor] (Image, Maybe Image) ->
   StateT Global IO (Image, Maybe Image)
-painty image mode1 = \case
+painty image (mode1, mode2) = \case
   Right x -> return x
   Left xs ->
-    if P.length xs == 2
-      then
-        let line = (\(x : y : nothing) -> bresenhams x y) xs
-         in undefined
-      else undefined
+    let line = (\(x : y : nothing) -> bresenhams x y) xs
+     in case mode2 of
+          Stamp -> undefined
+          Text -> undefined
+          Line -> undefined
+          Polygon -> undefined
+          PolyFill -> undefined
 
 -- explainer:
 --

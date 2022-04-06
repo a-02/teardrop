@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Types where
@@ -30,6 +31,14 @@ data Global = Global
 --
 collapse :: Ord s => Statelike s a -> a
 collapse sl = stripD sl M.! stripI sl
+
+mode1ToPack :: Mode1 -> (Global -> Cell)
+mode1ToPack = \case
+  Normal -> packAll
+  ReplaceFGColor -> packFG
+  ReplaceBGColor -> packBG
+  ReplaceAllColor -> packColor
+  ReplaceText -> packText
 
 packAll :: Global -> Cell
 packAll global =
