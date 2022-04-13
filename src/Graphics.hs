@@ -184,6 +184,7 @@ renderCell :: Cell -> IO ()
 renderCell cell = (setSGR $ fst cell) *> (putChar $ snd cell) *> (setSGR [Reset])
 
 -- i dont know how this works. this was "adapted" from LambdaHack
+-- to myself: actually make a readable bresenhams in haskell
 
 bresenhams :: RelCursor -> RelCursor -> [RelCursor]
 bresenhams (x0, y0) (x1, y1) =

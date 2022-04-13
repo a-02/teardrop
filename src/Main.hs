@@ -23,15 +23,16 @@ import Data.Vector as V hiding (foldl1, modify, sequence)
 import Files
 import Graphics
 import Input
+import Lonely
 import System.Console.ANSI
 import System.IO
 import Types
 
--- whats this? its main!
--- first 3 things are standard IO bullshit, makin sure everything gets put where
--- it needs to go
--- clearScreen and setCursorPosition are obvious
--- runStateT... i'll explain
+{-
+ main sets all the terminal options so that the program runs smoothly,
+ and then runs the drawing loop.
+-}
+
 main :: IO ()
 main = do
   hSetEcho stdin False
@@ -41,42 +42,43 @@ main = do
   setCursorPosition 0 0
   pure () <* runStateT everything initGlobal
 
--- what? alright this cofree thing solves a very problem
--- unfoldM's typesig is...
---
--- (Traversable f, Monad m) => (b -> m (a, f b)) -> b -> m (Cofree f a)
---
--- applying types...
---
---   (Image -> StateT Global IO (Image, Identity Image)) ->
---     Image -> StateT Global IO (Cofree Identity Image)
---
--- this sorta loop generates data, while keeping track of state
--- all wrapped around the IO monad
---
--- "but isn't `Cofree Identity a` just `Stream a` ?"
---
--- yes, it is. but it doesn't really have the same interface as the Cofree one.
---
--- eventually,  god willing, this program will grow in size and functionality
--- to necessitate modifying, restarting, swapping, or otherwise fiddling with
--- the structure of the loop itself.
---
--- the `f` in `Cofree f a` may soon be changed to a more complex type like
--- Maybe or Pair or whatever.
---
--- this is just `machines` but going the long way around, but. i argue. that
--- learning another package is less important than building lasting haskell understanding
-everything :: StateT Global IO (Cofree Identity Image)
+{-
+ what? alright this cofree thing solves a very problem
+ unfoldM's typesig is...
+
+ (Traversable f, Monad m) => (b -> m (a, f b)) -> b -> m (Cofree f a)
+
+ applying types...
+
+   (Image -> StateT Global IO (Image, Identity Image)) ->
+     Image -> StateT Global IO (Cofree Identity Image)
+
+ this sorta loop generates data, while keeping track of state
+ all wrapped around the IO monad
+
+ "but isn't `Cofree Identity a` just `Stream a` ?"
+
+ yes, it is. but it doesn't really have the same interface as the Cofree one.
+
+ eventually,  god willing, this program will grow in size and functionality
+ to necessitate modifying, restarting, swapping, or otherwise fiddling with
+ the structure of the loop itself.
+
+ the `f` in `Cofree f a` may soon be changed to a more complex type like
+ Maybe or Pair or whatever.
+
+ note: this is also, to my knowledge what `machines` and `pipes` do, but the comonad-ness
+ is hidden from view.
+-}
+
+everything :: StateT Global IO (Cofree Maybe Image)
 everything = unfoldM mainLoop (blankImage 30 30)
 
--- UNIMPL
-mainLoop' :: Image -> StateT Global IO (Image, Maybe Image)
-mainLoop' image = do
+mainLoop :: Image -> StateT Global IO (Image, Maybe Image)
+mainLoop image = do
   initScript image
   inputScript image
 
--- UNIMPL
 initScript :: Image -> StateT Global IO ()
 initScript image = do
   global <- get
@@ -84,7 +86,6 @@ initScript image = do
   io $ renderImage (fullRender global image)
   io $ hFlush stdout
 
--- UNIMPL
 inputScript :: Image -> StateT Global IO (Image, Maybe Image)
 inputScript image =
   let ifM b t f = do b <- b; if b then t else f
@@ -98,13 +99,11 @@ inputScript image =
           )
           (paintModify input image)
 
--- UNIMPL
 onModeInput :: Char -> StateT Global IO Bool
 onModeInput input = return $ test input
   where
     test x = foldl1 (||) ((== x) <$> ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'])
 
--- UNIMPL
 modeModify :: Char -> StateT Global IO ()
 modeModify input = do
   modify $ \g -> g {mode = modeMatch g.mode input}

@@ -26,15 +26,6 @@ import Lonely
 import Types
 import Prelude as P
 
--- select input scheme from mode2
---  - read from file?
--- do input, recur
---  - find scheme?
--- paint with mode1
-
-io :: IO a -> StateT Global IO a
-io = liftIO
-
 -- a full writeup is necessary. many iterations of this have come about
 
 meat :: Char -> Image -> StateT Global IO (Image, Maybe Image)
@@ -132,10 +123,21 @@ painty image (mode1, mode2) = \case
           g <- get -- i never thought i could do this
           case mode2 of
             Stamp -> return (image, paintMeat g cursors) -- im stupid
-            Text -> return (image, paintMeat g cursors)
+            Text -> return (image, Just image) -- this will most likely never happen due to how Text gets handled
             Line -> return (image, paintMeat g line)
             Polygon -> return (image, paintMeat g poly)
             PolyFill -> return (image, paintMeat g polyfill)
+
+-- cheating and just updating the image now
+keySchemeText :: Char -> Scheme
+keySchemeText input image keycommand =
+  do
+    g <- get
+    let cursor = g.relCursor
+        mode1 = fst g.mode
+        cy = clampY image
+    modify \g -> g {relCursor = bimap id (cy . up) cursor}
+    return $ Right $ (,) image (Just $ update2d image cursor (setsnd input $ mode1ToPack mode1 g))
 
 -- explainer:
 --
@@ -200,13 +202,6 @@ keySchemeStamp image keycommand =
             return $ Left [rel]
         Dummy -> whatever
 
--- why did i do this to myself
-keySchemeText :: Char -> Scheme
-keySchemeText input image keycommand = case input of
-  '\b' -> whatever
-  '\n' -> whatever
-  _ -> whatever
-
 keySchemePoly :: Scheme
 keySchemePoly image keycommand =
   let go x = do
@@ -240,28 +235,6 @@ keySchemeLine image keycommand =
               true
           )
           go
-
--- so heres the thing. the counit is supposed to be Either. but that sucks
-class Bifunctor w => Bicomonad w where
-  biextract :: Semigroup b => w a b -> (a, b)
-
-  -- biextend lextract rextract = id
-  -- biextend (fst . biextract) (snd . biextract) = id
-  lextract :: w a b -> a
-  rextract :: w a b -> b
-  biduplicate :: w a b -> w (w a b) (w a b)
-
-  -- biduplicate = biextend id id
-  biextend :: (w a b -> c) -> (w a b -> d) -> w a b -> w c d
-
--- biextend f g = bimap f g . biduplicate
-
-instance Bicomonad (,) where
-  biextract = id
-  lextract = fst
-  rextract = snd
-  biduplicate w = (w, w)
-  biextend f g w = (f w, g w)
 
 {- on IORef;
 
