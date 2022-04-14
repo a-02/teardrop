@@ -1,7 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -18,6 +16,7 @@ import Data.IORef -- see comment at bottom of file
 import Data.List
 import Data.Map as M
 import Data.Vector as V hiding (foldl1, modify, sequence)
+import Data.Void
 import Files
 import Geometry
 import Graphics
@@ -123,7 +122,7 @@ painty image (mode1, mode2) = \case
           g <- get -- i never thought i could do this
           case mode2 of
             Stamp -> return (image, paintMeat g cursors) -- im stupid
-            Text -> return (image, Just image) -- this will most likely never happen due to how Text gets handled
+            Text -> return $ error "how did this happen?"
             Line -> return (image, paintMeat g line)
             Polygon -> return (image, paintMeat g poly)
             PolyFill -> return (image, paintMeat g polyfill)
