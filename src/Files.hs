@@ -23,12 +23,6 @@ import Prelude as P
 
 type Parser = Parsec Void String -- remember how you can partially apply type constructors?
 
-parseKeyCommand :: Parser KeyCommand
-parseKeyCommand = P.foldl1 (<|>) $ kcTypes <*> (string <$> kcStrings)
-  where
-    kcTypes = fmap (<$) [UpLeft, UpRight, DownLeft, DownRight, Up, Down, KLeft, KRight, PrevFG, NextFG, PrevBG, NextBG, PrevTX, NextTX, PrevPG, NextPG, Save, Load, Select]
-    kcStrings = ["upleft", "upright", "downleft", "downright", "up", "down", "left", "right", "prevfg", "nextfg", "prevbg", "nextbg", "prevtx", "nexttx", "prevpg", "nextpg", "save", "load", "select"]
-
 parseKeyCommandByHand :: Parser KeyCommand
 parseKeyCommandByHand =
   choice
