@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -15,7 +16,7 @@ import Data.Either as E
 import Data.IORef -- see comment at bottom of file
 import Data.List
 import Data.Map as M
-import Data.Vector as V hiding (foldl1, modify, sequence)
+import Data.Vector as V hiding (modify, sequence)
 import Data.Void
 import Files
 import Geometry
@@ -117,7 +118,8 @@ painty image (mode1, mode2) = \case
         poly = pixelsOnBoundary cursors
         polyfill = pixelsInPolygon cursors
         update global (x :: RelCursor) = update2d image x ((mode1ToPack mode1) global) :: Image
-        paintMeat g xs = (Just . foldl1 magma) $ update g <$> xs
+        append x y = x P.++ y
+        paintMeat g xs = (Just . P.foldl1 magma) $ append [image] (update g <$> xs) -- ah fuck
      in do
           g <- get -- i never thought i could do this
           case mode2 of
@@ -207,9 +209,10 @@ keySchemePoly image keycommand =
         input <- io $ getChar
         c2kc <- io $ readIORef =<< char2kcRef' -- huh?
         y <- keySchemeStamp image (c2kc input)
+        io $ print (show y)
         return $ validate [x, y]
    in keySchemeStamp image keycommand
-        >>= iterateUntilM
+        >>= iterateUntilM -- FUCKING MONADLOOPS
           ( E.either
               polyTest
               true
@@ -218,7 +221,7 @@ keySchemePoly image keycommand =
 
 polyTest x =
   let (a : b : rest) = P.reverse x
-   in a == b
+   in if P.length x <= 2 then False else a == b
 
 keySchemeLine :: Scheme
 keySchemeLine image keycommand =

@@ -122,6 +122,5 @@ modeModify input = do
         '0' -> (,) m1 PolyFill
         _ -> mode
 
--- UNIMPL; see Input.hs
 paintModify :: Char -> Image -> StateT Global IO (Image, Maybe Image)
 paintModify input image = meat input image

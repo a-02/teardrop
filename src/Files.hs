@@ -4,6 +4,7 @@
 module Files where
 
 import Control.Applicative hiding (many)
+import Control.Monad (join)
 import Data.ByteString as B hiding (getLine, putStr)
 import Data.Either
 import Data.Functor
@@ -16,65 +17,48 @@ import Graphics
 import System.IO hiding (readFile, writeFile)
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Text.Megaparsec.Error -- debugging!
 import Types
 import Prelude as P
 
 type Parser = Parsec Void String -- remember how you can partially apply type constructors?
 
 parseKeyCommand :: Parser KeyCommand
-parseKeyCommand = P.foldl1 (<|>) $ kcTypes <*> (string' <$> kcStrings)
+parseKeyCommand = P.foldl1 (<|>) $ kcTypes <*> (string <$> kcStrings)
   where
-    kcTypes =
-      fmap
-        (<$)
-        [ UpLeft, -- die
-          UpRight,
-          DownLeft,
-          DownRight,
-          Up,
-          Down,
-          KLeft,
-          KRight,
-          PrevFG,
-          NextFG,
-          PrevBG,
-          NextBG,
-          PrevTX,
-          NextTX,
-          PrevPG,
-          NextPG,
-          Save,
-          Load,
-          Select
-        ]
-    kcStrings =
-      [ "upleft",
-        "upright",
-        "downleft",
-        "downright",
-        "up",
-        "down",
-        "left",
-        "right",
-        "prevfg",
-        "nextfg",
-        "prevbg",
-        "nextbg",
-        "prevtx",
-        "nexttx",
-        "prevpg",
-        "nextpg",
-        "save",
-        "load",
-        "select"
-      ]
+    kcTypes = fmap (<$) [UpLeft, UpRight, DownLeft, DownRight, Up, Down, KLeft, KRight, PrevFG, NextFG, PrevBG, NextBG, PrevTX, NextTX, PrevPG, NextPG, Save, Load, Select]
+    kcStrings = ["upleft", "upright", "downleft", "downright", "up", "down", "left", "right", "prevfg", "nextfg", "prevbg", "nextbg", "prevtx", "nexttx", "prevpg", "nextpg", "save", "load", "select"]
+
+parseKeyCommandByHand :: Parser KeyCommand
+parseKeyCommandByHand =
+  choice
+    [ UpLeft <$ string "upleft",
+      UpRight <$ string "upright",
+      DownLeft <$ string "downleft",
+      DownRight <$ string "downright",
+      Up <$ string "up",
+      Down <$ string "down",
+      KLeft <$ string "left",
+      KRight <$ string "right",
+      PrevFG <$ string "prevfg",
+      NextFG <$ string "nextfg",
+      PrevBG <$ string "prevbg",
+      NextBG <$ string "nextbg",
+      PrevTX <$ string "prevtx",
+      NextTX <$ string "nexttx",
+      PrevPG <$ string "prevpg",
+      NextPG <$ string "nextpg",
+      Save <$ string "save",
+      Load <$ string "load",
+      Select <$ string "select"
+    ]
 
 parseLetterOrPunct :: Parser Char
 parseLetterOrPunct = letterChar <|> punctuationChar
 
 parseKCLine :: Parser (Char, KeyCommand)
 parseKCLine = do
-  kc <- parseKeyCommand
+  kc <- parseKeyCommandByHand
   void $ char '='
   ch <- parseLetterOrPunct
   void $ newline
@@ -86,8 +70,15 @@ grabby =
   lookupU <$> do
     conf <- P.readFile "keys.conf"
     return $ case runParser (many parseKCLine <* eof) "keys.conf" conf of
-      Left _ -> undefined -- Fuck You
+      Left x -> error (errorBundlePretty x) -- Fuck You
       Right x -> x
+
+parseTest =
+  join $ do
+    conf <- P.readFile "keys.conf"
+    return $ case runParser (many parseKCLine <* eof) "keys.conf" conf of
+      Left x -> putStr (errorBundlePretty x) -- Fuck You
+      Right x -> print x
 
 char2kcRef :: IO Conf
 char2kcRef = do
