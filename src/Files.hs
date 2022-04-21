@@ -116,10 +116,3 @@ loadImage = do
         hSetEcho stdin False
         hSetBuffering stdout LineBuffering
         return $ either (const $ blankImage 30 30) id image
-
-diskOp :: Char -> Image -> IO Image
-diskOp input image =
-  case input of
-    'S' -> saveImage image
-    'L' -> loadImage
-    _ -> return image
