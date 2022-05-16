@@ -71,10 +71,10 @@ main = do
  is hidden from view.
 -}
 
-everything :: StateT Global IO (Cofree Maybe Image)
+everything :: StateT Global IO (Cofree (Iddy [RelCursor]) Image)
 everything = unfoldM mainLoop (blankImage 30 30)
 
-mainLoop :: Image -> StateT Global IO (Image, Maybe Image)
+mainLoop :: Image -> StateT Global IO ImagePack
 mainLoop image = do
   initScript image
   inputScript image
@@ -86,7 +86,7 @@ initScript image = do
   io $ renderImage (fullRender global image)
   io $ hFlush stdout
 
-inputScript :: Image -> StateT Global IO (Image, Maybe Image)
+inputScript :: Image -> StateT Global IO ImagePack
 inputScript image =
   let ifM b t f = do b <- b; if b then t else f
    in do
@@ -95,7 +95,7 @@ inputScript image =
           (onModeInput input)
           ( do
               modeModify input
-              return (image, Just image)
+              return (image, Continue image)
           )
           (paintModify input image)
 
@@ -121,6 +121,3 @@ modeModify input = do
         '9' -> (,) m1 Polygon
         '0' -> (,) m1 PolyFill
         _ -> mode
-
-paintModify :: Char -> Image -> StateT Global IO (Image, Maybe Image)
-paintModify input image = meat input image

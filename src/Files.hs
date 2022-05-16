@@ -23,6 +23,7 @@ import Prelude as P
 
 type Parser = Parsec Void String -- remember how you can partially apply type constructors?
 
+-- theres gotta be a better way.
 parseKeyCommandByHand :: Parser KeyCommand
 parseKeyCommandByHand =
   choice

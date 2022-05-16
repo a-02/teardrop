@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -27,8 +30,10 @@ data Global = Global
   }
   deriving (Eq, Show)
 
+data Iddy s a = Stop | Continue a | Bundle s a a deriving (Eq, Ord, Show, Functor, Traversable, Foldable)
+
 -- !! Graphics helper functions. !! --
---
+
 collapse :: Ord s => Statelike s a -> a
 collapse sl = stripD sl M.! stripI sl
 
@@ -98,6 +103,8 @@ type Cell = ([SGR], Char)
 
 type Image = V.Vector (V.Vector Cell)
 
+type ImagePack = (Image, Iddy [RelCursor] Image)
+
 type Env = (Mode, Image)
 
 type RelCursor = (Int, Int)
@@ -110,10 +117,7 @@ type Scheme =
   StateT
     Global
     IO
-    ( Either
-        [RelCursor]
-        (Image, Maybe Image) -- FEAR NO DANGER
-    )
+    ImagePack
 
 -- !! Newtypes and instances. !! --
 
@@ -207,14 +211,14 @@ instance Serialize SGR where
 -- !! Configuration datatypes. !! --
 
 data KeyCommand
-  = Up
-  | Down
-  | KLeft
-  | KRight -- w a s d
-  | UpLeft
+  = UpLeft
   | UpRight -- q e
   | DownLeft
   | DownRight -- z c
+  | Up
+  | Down
+  | KLeft
+  | KRight -- w a s d
   | PrevFG
   | NextFG -- i o
   | PrevBG

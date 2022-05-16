@@ -4,6 +4,8 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- lotta debt to clean up here!
+
 module Input where
 
 import Control.Comonad
@@ -28,20 +30,26 @@ import Prelude as P
 
 -- a full writeup is necessary. many iterations of this have come about
 
-meat :: Char -> Image -> StateT Global IO (Image, Maybe Image)
-meat input image = do
+paintModify :: Char -> Image -> StateT Global IO ImagePack
+paintModify input image = do
   global <- get
   let mode = global.mode
       env = (mode, image) -- aint i readable
-      bleh = return ()
   extract $
     extend
-      (grabScheme input =>= selectCells input =>= colorCells input)
-      (env, bleh)
+      ( grabScheme input
+          =>= selectCells input
+          =>= colorCells input
+      )
+      (env, return ())
 
--- extract :: (e, a) -> a
--- extend :: ( (e, a) -> b ) -> (e, a) -> (e, b)
--- (=>=) :: ( (e, a) -> b ) -> ( (e, b) -> c ) -> (e, a) -> c
+{-
+
+ extract :: (e, a) -> a
+ extend :: ( (e, a) -> b ) -> (e, a) -> (e, b)
+ (=>=) :: ( (e, a) -> b ) -> ( (e, b) -> c ) -> (e, a) -> c
+
+-}
 
 {-
 type Scheme =
@@ -67,20 +75,22 @@ grabScheme input shebang =
         Polygon -> keySchemePoly
         PolyFill -> keySchemePoly
 
--- selectCells is a weird bit of half-accidental design.
--- i dont really want users to be able to change modes in the middle of drawing with the mode
--- so this sorta locks you into it until you finish doin inputs.
--- yknow. like mspaint.
+{-
+
+ selectCells is a weird bit of half-accidental design.
+ i dont really want users to be able to change modes in the middle of drawing with the mode
+ so this sorta locks you into it until you finish doin inputs.
+ yknow. like mspaint.
+
+-}
+
 selectCells ::
   Char ->
   (Env, StateT Global IO Scheme) -> -- mode, original image, and ANOTHER STATE MONAD
   ( StateT
       Global
       IO
-      ( Either
-          [RelCursor]
-          (Image, Maybe Image)
-      )
+      ImagePack
   )
 selectCells input shebang =
   let image = shebang ^. _1 . _2
@@ -97,9 +107,9 @@ colorCells ::
     StateT
       Global
       IO
-      (Either [RelCursor] (Image, Maybe Image))
+      ImagePack
   ) ->
-  StateT Global IO (Image, Maybe Image)
+  StateT Global IO ImagePack
 colorCells input shebang =
   let image = shebang ^. _1 . _2
       mode = shebang ^. _1 . _1
@@ -109,9 +119,12 @@ colorCells input shebang =
 painty ::
   Image ->
   Mode ->
-  Either [RelCursor] (Image, Maybe Image) ->
-  StateT Global IO (Image, Maybe Image)
-painty image (mode1, mode2) = \case
+  ImagePack ->
+  StateT Global IO ImagePack
+painty image (mode1, mode2) = undefined
+
+{-
+\case
   Right x -> return x
   Left cursors ->
     let line = (\(x : y : nothing) -> bresenhams x y) cursors
@@ -128,7 +141,7 @@ painty image (mode1, mode2) = \case
             Line -> return (image, paintMeat g line)
             Polygon -> return (image, paintMeat g poly)
             PolyFill -> return (image, paintMeat g polyfill)
-
+-}
 -- cheating and just updating the image now
 keySchemeText :: Char -> Scheme
 keySchemeText input image keycommand =
@@ -136,9 +149,9 @@ keySchemeText input image keycommand =
     g <- get
     let cursor = g.relCursor
         mode1 = fst g.mode
-        cy = clampY image
-    modify \g -> g {relCursor = bimap id (cy . up) cursor}
-    return $ Right $ (,) image (Just $ update2d image cursor (setsnd input $ mode1ToPack mode1 g))
+        cx = clampX image
+    modify \g -> g {relCursor = bimap (cx . up) id cursor}
+    return $ (,) image (Continue $ update2d image cursor (setsnd input $ mode1ToPack mode1 g))
 
 -- explainer:
 --
@@ -155,6 +168,7 @@ keySchemeStamp image keycommand =
       clampY y = y `mod` (V.length $ V.head image)
       down = (\x -> x - 1)
       up = (\x -> x + 1)
+      whatever = return $ (image, Continue image)
    in case keycommand of
         Up -> do modify \g -> g {relCursor = bimap id (clampY . down) g.relCursor}; whatever
         Down -> do modify \g -> g {relCursor = bimap id (clampY . up) g.relCursor}; whatever
@@ -195,13 +209,21 @@ keySchemeStamp image keycommand =
         Load ->
           do
             what <- io $ loadImage
-            return $ Right (what, Just what)
+            return $ (what, Continue what)
         Select ->
           do
             g <- get
             let rel = g.relCursor
-            return $ Left [rel]
+            return $ (image, Continue image) -- update2d!
         Dummy -> whatever
+
+keySchemePoly :: Scheme
+keySchemePoly = undefined
+
+keySchemeLine :: Scheme
+keySchemeLine = undefined
+
+{- below is nonfunctional. do not use it.
 
 keySchemePoly :: Scheme
 keySchemePoly image keycommand =
@@ -237,6 +259,8 @@ keySchemeLine image keycommand =
               true
           )
           go
+
+-}
 
 {- on IORef;
 

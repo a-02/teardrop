@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE NegativeLiterals #-}
 
 module Lonely where
 
+import Control.Comonad.Cofree
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Lazy
 import Data.Vector as V
@@ -19,8 +21,7 @@ up = (+ 1)
 
 true = const True
 
-whatever :: StateT Global IO (Either [a] b)
-whatever = return $ Left []
+false = const False
 
 io :: IO a -> StateT Global IO a
 io = liftIO
